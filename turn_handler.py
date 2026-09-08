@@ -1,35 +1,88 @@
-def turnHandler(target, robot, turret):  # Inputs: target, robot, and turret headings
+/*
+This function aims the turret at the target while keeping the turret inside its safe -90° to +90° range.
+If the turret cannot reach the target by itself, the robot turns until the target becomes reachable.
+*/
 
-    relative = target - robot  # Find target angle relative to the robot
+public class TurretCode {  
+    // Creates a class named TurretCode to hold our function.
 
-    if relative > 180:  # Handle wrap-around past +180
-        relative -= 360
-    elif relative < -180:  # Handle wrap-around past -180
-        relative += 360
+    public static int[] turnHandler(float target, float robot, float turret) {  
+        // Creates the turnHandler function.
+        // target = absolute target heading on the field.
+        // robot = absolute robot heading on the field.
+        // turret = turret angle relative to the robot.
+        // int[] means the function returns two integers.
 
-    if relative >= 90:  # Target is outside the safe range on the positive side
-        robot_turn = 1  # Robot turns clockwise
-        turret_goal = 89.5  # Turret moves toward the safe edge
+        float relative = (target - robot + 540) % 360 - 180;  
+        // Finds where the target is relative to the front of the robot.
+        // The extra math keeps the result between -180° and +180°.
+        // Example: robot = 170°, target = -170° gives relative = 20° instead of -340°.
 
-    elif relative <= -90:  # Target is outside the safe range on the negative side
-        robot_turn = -1  # Robot turns counter-clockwise
-        turret_goal = -89.5  # Turret moves toward the safe edge
+        int robotTurn;  
+        // Stores which direction the robot should turn:
+        // 1 = clockwise, -1 = counter-clockwise, 0 = don't turn.
 
-    else:  # Target can be reached by the turret
-        robot_turn = 0  # Robot does not move
-        turret_goal = relative  # Turret aims directly at target
+        float goal;  
+        // Stores the angle where we want the turret to move.
 
-    error = turret_goal - turret  # Difference between desired and current turret angle
+        if (relative >= 90) {  
+            // Checks if the target is beyond the turret's +90° safe limit.
 
-    if turret >= 90:  # Turret must immediately move back into safe range
-        turret_turn = -1
-    elif turret <= -90:  # Turret must immediately move back into safe range
-        turret_turn = 1
-    elif -0.5 <= error <= 0.5:  # Turret is close enough to its goal
-        turret_turn = 0
-    elif error > 0:  # Need to move clockwise
-        turret_turn = 1
-    else:  # Need to move counter-clockwise
-        turret_turn = -1
+            robotTurn = 1;  
+            // The robot needs to turn clockwise so the target comes into the turret's range.
 
-    return [turret_turn, robot_turn]  # Return both movement directions
+            goal = 89;  
+            // Move the turret toward +89°, just inside the +90° limit.
+
+        } else if (relative <= -90) {  
+            // Checks if the target is beyond the turret's -90° safe limit.
+
+            robotTurn = -1;  
+            // The robot needs to turn counter-clockwise.
+
+            goal = -89;  
+            // Move the turret toward -89°, just inside the -90° limit.
+
+        } else {  
+            // Runs when the target is already inside the turret's safe range.
+
+            robotTurn = 0;  
+            // The robot does not need to move.
+
+            goal = relative;  
+            // The turret can point directly at the target.
+        }
+
+        float error = goal - turret;  
+        // Finds how far the turret is from where it needs to be.
+        // Example: goal = 40°, turret = 10°, error = 30°.
+
+        int turretTurn;  
+        // Stores which direction the turret should turn:
+        // 1 = clockwise, -1 = counter-clockwise, 0 = stop.
+
+        if (Math.abs(error) <= 0.5) {  
+            // Checks whether the turret is within 0.5° of its goal.
+
+            turretTurn = 0;  
+            // The turret is close enough, so it stops.
+
+        } else if (error > 0) {  
+            // If the error is positive, the turret needs to move in the positive direction.
+
+            turretTurn = 1;  
+            // Tell the turret to turn clockwise.
+
+        } else {  
+            // If the error is negative, it needs to move in the opposite direction.
+
+            turretTurn = -1;  
+            // Tell the turret to turn counter-clockwise.
+        }
+
+        return new int[]{turretTurn, robotTurn};  
+        // Returns both answers.
+        // First number = turret direction.
+        // Second number = robot direction.
+    }
+}
